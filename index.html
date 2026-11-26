@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="주식영단어" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>📈 주식·경제 영단어 학습</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #191f28;
+      --sub: #6b7684;
+      --line: #e5e8eb;
+      --primary: #3182f6;
+      --primary-soft: #e8f3ff;
+      --green: #00b37e;
+      --green-soft: #e6f9f2;
+      --red: #f04452;
+      --red-soft: #fdecee;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 48px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px 10px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .speed-box {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 10px;
+    }
+    .speed-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      color: var(--sub);
+      cursor: pointer;
+    }
+    .speed-btn.active {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tab {
+      flex: 1;
+      border: none;
+      background: var(--bg);
+      color: var(--sub);
+      padding: 10px 8px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 14px 16px;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+    }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-soft { background: var(--primary-soft); color: var(--primary); }
+    .btn-gray { background: #edf0f5; color: var(--text); }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      border: 1px solid var(--line);
+    }
+    .word-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .word-term {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .word-num {
+      color: var(--primary);
+      margin-right: 4px;
+    }
+    .word-meaning {
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .example-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+    }
+    .example-en {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .example-ko {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+    .hidden-text {
+      filter: blur(5px);
+      user-select: none;
+      transition: filter 0.15s;
+    }
+    .audio-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .speak-btn {
+      border: 1px solid var(--line);
+      background: #fafbfd;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .speak-btn:active { background: var(--primary-soft); border-color: var(--primary); }
+    .quiz-sentence {
+      font-size: 15px;
+      line-height: 1.9;
+      color: var(--text);
+    }
+    .blank-input {
+      width: 112px;
+      max-width: 45vw;
+      border: none;
+      border-bottom: 2px solid var(--primary);
+      background: var(--primary-soft);
+      border-radius: 6px 6px 0 0;
+      padding: 3px 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      outline: none;
+      margin: 0 2px;
+    }
+    .blank-input.correct {
+      border-bottom-color: var(--green);
+      background: var(--green-soft);
+      color: #027a55;
+    }
+    .blank-input.wrong {
+      border-bottom-color: var(--red);
+      background: var(--red-soft);
+      color: #c92a37;
+    }
+    .quiz-feedback {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .quiz-feedback.ok { color: var(--green); }
+    .quiz-feedback.no { color: var(--red); }
+    .score-banner {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .score-text { font-size: 15px; font-weight: 700; }
+    .tts-note {
+      font-size: 12px;
+      color: var(--sub);
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-row">
+      <h1>📈 주식·경제 영단어</h1>
+      <div class="speed-box" aria-label="읽기 속도">
+        <button class="speed-btn" data-rate="0.75" onclick="setRate(0.75, this)">천천히</button>
+        <button class="speed-btn active" data-rate="0.95" onclick="setRate(0.95, this)">보통</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today', this)">오늘 단어 (11/26)</button>
+      <button class="tab" onclick="switchTab('quiz', this)">복습 퀴즈 (11/25)</button>
+      <button class="tab" onclick="switchTab('all', this)">전체 (20)</button>
+    </div>
+  </header>
+
+  <main id="app"></main>
+
+  <script>
+    const DAY2 = [
+      {
+        term: "blue chip",
+        meaning: "우량주, 대형 우량 기업",
+        en: "Many conservative investors prefer holding blue chip stocks for the long term.",
+        ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
+      },
+      {
+        term: "market cap",
+        meaning: "시가총액",
+        en: "The semiconductor giant's market cap surpassed $500 billion.",
+        ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
+      },
+      {
+        term: "profit-taking",
+        meaning: "차익 실현",
+        en: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
+        ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
+      },
+      {
+        term: "short selling",
+        meaning: "공매도",
+        en: "Regulators tightened rules on short selling to curb excessive declines.",
+        ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
+      },
+      {
+        term: "all-time high",
+        meaning: "사상 최고치",
+        en: "The S&P 500 closed at a new all-time high yesterday.",
+        ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
+      },
+      {
+        term: "buy the dip",
+        meaning: "저가 매수하다, 하락장에서 사다",
+        en: "Retail traders were quick to buy the dip when tech shares pulled back.",
+        ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
+      },
+      {
+        term: "priced in",
+        meaning: "이미 가격에 반영된",
+        en: "The expected rate cut is already priced in by the bond market.",
+        ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
+      },
+      {
+        term: "hawkish",
+        meaning: "매파적인, 긴축·금리 인상을 선호하는",
+        en: "The Fed chair's hawkish remarks sent Treasury yields higher.",
+        ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
+      },
+      {
+        term: "dovish",
+        meaning: "비둘기파적인, 완화·금리 인하를 선호하는",
+        en: "Stocks climbed on hopes of a more dovish stance next month.",
+        ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
+      },
+      {
+        term: "bottom out",
+        meaning: "바닥을 치다, 하락세가 멈추고 반등 조짐을 보이다",
+        en: "Analysts believe housing demand is finally starting to bottom out.",
+        ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
+      }
+    ];
+
+    const DAY1_QUIZ = [
+      {
+        parts: ["Investors ", " to gold as a ", " during the market turmoil."],
+        answers: ["rushed", "safe haven"],
+        fullEn: "Investors rushed to gold as a safe haven during the market turmoil.",
+        ko: "시장 혼란 속에서 투자자들이 안전자산인 금으로 몰렸다."
+      },
+      {
+        parts: ["Analysts ", " ", " on tech stocks this quarter."],
+        answers: ["remain", "bullish"],
+        fullEn: "Analysts remain bullish on tech stocks this quarter.",
+        ko: "애널리스트들은 이번 분기 기술주에 대해 여전히 강세 전망을 유지하고 있다."
+      },
+      {
+        parts: ["A ", " sentiment ", " the market after weak jobs data."],
+        answers: ["bearish", "swept"],
+        fullEn: "A bearish sentiment swept the market after weak jobs data.",
+        ko: "부진한 고용 지표 이후 시장에 약세 심리가 퍼졌다."
+      },
+      {
+        parts: ["The index ", " a sharp afternoon ", "."],
+        answers: ["staged", "rally"],
+        fullEn: "The index staged a sharp afternoon rally.",
+        ko: "지수는 오후 들어 가파른 반등을 보였다."
+      },
+      {
+        parts: ["Many see the recent dip as a healthy market ", "."],
+        answers: ["correction"],
+        fullEn: "Many see the recent dip as a healthy market correction.",
+        ko: "많은 이들이 최근 하락을 건전한 시장 조정으로 본다."
+      },
+      {
+        parts: ["High ", " ", " short-term trading riskier."],
+        answers: ["volatility", "makes"],
+        fullEn: "High volatility makes short-term trading riskier.",
+        ko: "높은 변동성은 단기 매매의 위험을 키운다."
+      },
+      {
+        parts: ["This company ", " an attractive ", " of 5%."],
+        answers: ["offers", "dividend yield"],
+        fullEn: "This company offers an attractive dividend yield of 5%.",
+        ko: "이 회사는 연 5%의 매력적인 배당수익률을 제공한다."
+      },
+      {
+        parts: ["The stock ", " 8% on a positive ", "."],
+        answers: ["jumped", "earnings surprise"],
+        fullEn: "The stock jumped 8% on a positive earnings surprise.",
+        ko: "긍정적인 어닝 서프라이즈에 주가가 8% 뛰었다."
+      },
+      {
+        parts: ["Sticky ", " could ", " the central bank's rate cuts."],
+        answers: ["inflation", "delay"],
+        fullEn: "Sticky inflation could delay the central bank's rate cuts.",
+        ko: "끈적한 인플레이션이 중앙은행의 금리 인하를 늦출 수 있다."
+      },
+      {
+        parts: ["Another ", " weighed on growth stocks."],
+        answers: ["interest rate hike"],
+        fullEn: "Another interest rate hike weighed on growth stocks.",
+        ko: "추가 금리 인상이 성장주에 부담을 주었다."
+      }
+    ];
+
+    const DAY1_WORDS = [
+      { term: "safe haven", meaning: "안전자산, 피난처", en: "Investors rushed to gold as a safe haven during the market turmoil.", ko: "시장 혼란 속에서 투자자들이 안전자산인 금으로 몰렸다." },
+      { term: "bullish", meaning: "강세의, 상승을 전망하는", en: "Analysts remain bullish on tech stocks this quarter.", ko: "애널리스트들은 이번 분기 기술주에 대해 여전히 강세 전망을 유지하고 있다." },
+      { term: "bearish", meaning: "약세의, 하락을 전망하는", en: "A bearish sentiment swept the market after weak jobs data.", ko: "부진한 고용 지표 이후 시장에 약세 심리가 퍼졌다." },
+      { term: "rally", meaning: "반등, 주가 급등세", en: "The index staged a sharp afternoon rally.", ko: "지수는 오후 들어 가파른 반등을 보였다." },
+      { term: "correction", meaning: "조정, 단기 하락", en: "Many see the recent dip as a healthy market correction.", ko: "많은 이들이 최근 하락을 건전한 시장 조정으로 본다." },
+      { term: "volatility", meaning: "변동성", en: "High volatility makes short-term trading riskier.", ko: "높은 변동성은 단기 매매의 위험을 키운다." },
+      { term: "dividend yield", meaning: "배당수익률", en: "This company offers an attractive dividend yield of 5%.", ko: "이 회사는 연 5%의 매력적인 배당수익률을 제공한다." },
+      { term: "earnings surprise", meaning: "어닝 서프라이즈, 예상치 상회/하회", en: "The stock jumped 8% on a positive earnings surprise.", ko: "긍정적인 어닝 서프라이즈에 주가가 8% 뛰었다." },
+      { term: "inflation", meaning: "인플레이션, 물가 상승", en: "Sticky inflation could delay the central bank's rate cuts.", ko: "끈적한 인플레이션이 중앙은행의 금리 인하를 늦출 수 있다." },
+      { term: "interest rate hike", meaning: "금리 인상", en: "Another interest rate hike weighed on growth stocks.", ko: "추가 금리 인상이 성장주에 부담을 주었다." }
+    ];
+
+    let currentTab = "today";
+    let speechRate = 0.95;
+    let hideMeanings = false;
+    let quizInputs = DAY1_QUIZ.map(q => q.answers.map(() => ""));
+    let quizChecked = DAY1_QUIZ.map(() => false);
+    let playingAll = false;
+
+    function setRate(r, btn) {
+      speechRate = r;
+      document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    function speakText(text, onEnd) {
+      if (!("speechSynthesis" in window)) {
+        alert("이 브라우저에서는 음성 합성을 지원하지 않아요. Safari로 열어 주세요!");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = speechRate;
+      const voices = window.speechSynthesis.getVoices();
+      const enVoice = voices.find(v => v.lang.startsWith("en-US")) || voices.find(v => v.lang.startsWith("en"));
+      if (enVoice) u.voice = enVoice;
+      if (onEnd) u.onend = onEnd;
+      window.speechSynthesis.speak(u);
+    }
+
+    function stopSpeak() {
+      playingAll = false;
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      render();
+    }
+
+    function playAll(list) {
+      if (playingAll) {
+        stopSpeak();
+        return;
+      }
+      playingAll = true;
+      render();
+      let idx = 0;
+      function next() {
+        if (!playingAll || idx >= list.length) {
+          playingAll = false;
+          render();
+          return;
+        }
+        const item = list[idx++];
+        speakText(`${item.term}. ${item.en}`, () => {
+          setTimeout(next, 550);
+        });
+      }
+      next();
+    }
+
+    function switchTab(tab, btn) {
+      stopSpeak();
+      currentTab = tab;
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      render();
+    }
+
+    function toggleMeanings() {
+      hideMeanings = !hideMeanings;
+      render();
+    }
+
+    function renderWordList(list, label) {
+      const blurClass = hideMeanings ? "hidden-text" : "";
+      const cards = list.map((item, i) => `
+        <div class="card">
+          <div class="word-head">
+            <div>
+              <div class="word-term"><span class="word-num">${i + 1}.</span>${item.term}</div>
+              <div class="word-meaning ${blurClass}">${item.meaning}</div>
+            </div>
+          </div>
+          <div class="example-box">
+            <div class="example-en">${item.en}</div>
+            <div class="example-ko ${blurClass}">${item.ko}</div>
+          </div>
+          <div class="audio-row">
+            <button class="speak-btn" onclick='speakText(${JSON.stringify(item.term)})'>🔊 단어 발음</button>
+            <button class="speak-btn" onclick='speakText(${JSON.stringify(item.en)})'>🔊 예문 읽기</button>
+          </div>
+        </div>
+      `).join("");
+
+      return `
+        <div class="toolbar">
+          <span class="badge">${label}</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-gray" onclick="toggleMeanings()">${hideMeanings ? "👀 뜻 보기" : "🙈 뜻 가리기"}</button>
+            <button class="btn ${playingAll ? "btn-gray" : "btn-soft"}" onclick='${playingAll ? "stopSpeak()" : `playAll(${JSON.stringify(list)})`}'>${playingAll ? "⏹ 멈춤" : "▶ 전체 듣기"}</button>
+          </div>
+        </div>
+        ${cards}
+        <p class="tts-note">💡 팁: 무음 모드(매너모드)를 끄면 소리가 더 잘 들려요. (iOS Safari 권장)</p>
+      `;
+    }
+
+    function normalize(s) {
+      return s.trim().toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function isQuestionCorrect(qi) {
+      return DAY1_QUIZ[qi].answers.every((ans, ai) => normalize(quizInputs[qi][ai]) === normalize(ans));
+    }
+
+    function updateInput(qi, ai, val) {
+      quizInputs[qi][ai] = val;
+    }
+
+    function checkOne(qi) {
+      quizChecked[qi] = true;
+      render();
+    }
+
+    function checkAllQuiz() {
+      quizChecked = DAY1_QUIZ.map(() => true);
+      render();
+    }
+
+    function resetQuiz() {
+      quizInputs = DAY1_QUIZ.map(q => q.answers.map(() => ""));
+      quizChecked = DAY1_QUIZ.map(() => false);
+      render();
+    }
+
+    function renderQuiz() {
+      const checkedCount = quizChecked.filter(Boolean).length;
+      const correctCount = DAY1_QUIZ.filter((_, i) => quizChecked[i] && isQuestionCorrect(i)).length;
+
+      const items = DAY1_QUIZ.map((q, qi) => {
+        const checked = quizChecked[qi];
+        const allOk = checked && isQuestionCorrect(qi);
+
+        let sentenceHtml = `<span class="word-num">${qi + 1}.</span> `;
+        q.parts.forEach((part, pi) => {
+          sentenceHtml += part;
+          if (pi < q.answers.length) {
+            const val = quizInputs[qi][pi].replace(/"/g, "&quot;");
+            let cls = "blank-input";
+            if (checked) {
+              cls += normalize(quizInputs[qi][pi]) === normalize(q.answers[pi]) ? " correct" : " wrong";
+            }
+            sentenceHtml += `<input class="${cls}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="입력" value="${val}" oninput="updateInput(${qi}, ${pi}, this.value)" />`;
+          }
+        });
+
+        let feedbackHtml = "";
+        if (checked) {
+          if (allOk) {
+            feedbackHtml = `<div class="quiz-feedback ok">✅ 정답이에요!</div>`;
+          } else {
+            feedbackHtml = `<div class="quiz-feedback no">❌ 정답: ${q.answers.join(" / ")}</div>`;
+          }
+        }
+
+        return `
+          <div class="card">
+            <div class="quiz-sentence">${sentenceHtml}</div>
+            <div class="example-ko" style="margin-top:6px;">${q.ko}</div>
+            ${feedbackHtml}
+            <div class="audio-row">
+              <button class="speak-btn" onclick="checkOne(${qi})">정답 확인</button>
+              <button class="speak-btn" onclick='speakText(${JSON.stringify(q.fullEn)})'>🔊 문장 듣기</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="score-banner">
+          <div class="score-text">${checkedCount > 0 ? `채점 결과: ${correctCount} / ${DAY1_QUIZ.length}점` : "빈칸을 채우고 채점해 보세요!"}</div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-gray" onclick="resetQuiz()">초기화</button>
+            <button class="btn btn-primary" onclick="checkAllQuiz()">전체 채점</button>
+          </div>
+        </div>
+        ${items}
+      `;
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      if (currentTab === "today") {
+        app.innerHTML = renderWordList(DAY2, "2026-11-26 (2회차 · 10개)");
+      } else if (currentTab === "quiz") {
+        app.innerHTML = renderQuiz();
+      } else {
+        app.innerHTML = renderWordList([...DAY2, ...DAY1_WORDS], "누적 전체 단어 (20개)");
+      }
+    }
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = () => {};
+    }
+    render();
+  </script>
+</body>
+</html>
