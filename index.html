@@ -262,15 +262,78 @@
       </div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('today', this)">오늘 단어 (11/26)</button>
-      <button class="tab" onclick="switchTab('quiz', this)">복습 퀴즈 (11/25)</button>
-      <button class="tab" onclick="switchTab('all', this)">전체 (20)</button>
+      <button class="tab active" onclick="switchTab('today', this)">오늘 단어 (11/27)</button>
+      <button class="tab" onclick="switchTab('quiz', this)">복습 퀴즈 (11/26)</button>
+      <button class="tab" onclick="switchTab('all', this)">전체 (30)</button>
     </div>
   </header>
 
   <main id="app"></main>
 
   <script>
+    const DAY3 = [
+      {
+        term: "liquidity",
+        meaning: "유동성, 현금화하기 쉬운 정도",
+        en: "Central banks inject liquidity into the market during a crisis.",
+        ko: "중앙은행은 위기 시 시장에 유동성을 공급한다."
+      },
+      {
+        term: "stagflation",
+        meaning: "스태그플레이션, 경기 침체 속 물가 상승",
+        en: "Rising oil prices sparked fears of stagflation.",
+        ko: "유가 상승이 스태그플레이션 우려를 불러일으켰다."
+      },
+      {
+        term: "soft landing",
+        meaning: "연착륙, 경기 급랭 없이 물가만 잡히는 것",
+        en: "Investors are betting on a soft landing for the U.S. economy.",
+        ko: "투자자들은 미국 경제의 연착륙에 베팅하고 있다."
+      },
+      {
+        term: "guidance",
+        meaning: "실적 전망치, 기업이 제시하는 향후 예상 실적",
+        en: "The stock fell after management issued weak guidance for next quarter.",
+        ko: "경영진이 다음 분기 부진한 실적 전망을 내놓자 주가가 하락했다."
+      },
+      {
+        term: "undervalued",
+        meaning: "저평가된",
+        en: "Value investors look for undervalued stocks with strong fundamentals.",
+        ko: "가치 투자자들은 펀더멘털이 탄탄한 저평가 주식을 찾는다."
+      },
+      {
+        term: "overbought",
+        meaning: "과매수된, 단기 급등으로 매수세가 과도한",
+        en: "Technical indicators suggest the rally has left the index overbought.",
+        ko: "기술적 지표는 이번 반등으로 지수가 과매수 구간에 들어섰음을 시사한다."
+      },
+      {
+        term: "hedging",
+        meaning: "헤징, 위험 회피 거래",
+        en: "Airlines use fuel hedging to protect against sudden price spikes.",
+        ko: "항공사들은 갑작스러운 유가 급등에 대비해 연료 헤징을 활용한다."
+      },
+      {
+        term: "yield curve",
+        meaning: "수익률 곡선, 장단기 금리차 곡선",
+        en: "An inverted yield curve is often seen as a recession warning.",
+        ko: "장단기 금리 역전(역전된 수익률 곡선)은 흔히 경기 침체 신호로 여겨진다."
+      },
+      {
+        term: "break even",
+        meaning: "손익분기점에 도달하다, 본전을 찾다",
+        en: "The stock needs to rise 15% just for me to break even.",
+        ko: "본전만 찾으려 해도 주가가 15%는 올라야 한다."
+      },
+      {
+        term: "dead cat bounce",
+        meaning: "데드 캣 바운스, 하락장 속 일시적 반등",
+        en: "Some traders warned that today's rebound could be a dead cat bounce.",
+        ko: "일부 트레이더들은 오늘의 반등이 일시적 반등(데드 캣 바운스)일 수 있다고 경고했다."
+      }
+    ];
+
     const DAY2 = [
       {
         term: "blue chip",
@@ -336,64 +399,64 @@
 
     const DAY1_QUIZ = [
       {
-        parts: ["Investors ", " to gold as a ", " during the market turmoil."],
-        answers: ["rushed", "safe haven"],
-        fullEn: "Investors rushed to gold as a safe haven during the market turmoil.",
-        ko: "시장 혼란 속에서 투자자들이 안전자산인 금으로 몰렸다."
+        parts: ["Many conservative investors ", " holding ", " stocks for the long term."],
+        answers: ["prefer", "blue chip"],
+        fullEn: "Many conservative investors prefer holding blue chip stocks for the long term.",
+        ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
       },
       {
-        parts: ["Analysts ", " ", " on tech stocks this quarter."],
-        answers: ["remain", "bullish"],
-        fullEn: "Analysts remain bullish on tech stocks this quarter.",
-        ko: "애널리스트들은 이번 분기 기술주에 대해 여전히 강세 전망을 유지하고 있다."
+        parts: ["The semiconductor giant's ", " ", " $500 billion."],
+        answers: ["market cap", "surpassed"],
+        fullEn: "The semiconductor giant's market cap surpassed $500 billion.",
+        ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
       },
       {
-        parts: ["A ", " sentiment ", " the market after weak jobs data."],
-        answers: ["bearish", "swept"],
-        fullEn: "A bearish sentiment swept the market after weak jobs data.",
-        ko: "부진한 고용 지표 이후 시장에 약세 심리가 퍼졌다."
+        parts: ["Shares ", " slightly due to ", " after a five-day winning streak."],
+        answers: ["slipped", "profit-taking"],
+        fullEn: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
+        ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
       },
       {
-        parts: ["The index ", " a sharp afternoon ", "."],
-        answers: ["staged", "rally"],
-        fullEn: "The index staged a sharp afternoon rally.",
-        ko: "지수는 오후 들어 가파른 반등을 보였다."
+        parts: ["Regulators ", " rules on ", " to curb excessive declines."],
+        answers: ["tightened", "short selling"],
+        fullEn: "Regulators tightened rules on short selling to curb excessive declines.",
+        ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
       },
       {
-        parts: ["Many see the recent dip as a healthy market ", "."],
-        answers: ["correction"],
-        fullEn: "Many see the recent dip as a healthy market correction.",
-        ko: "많은 이들이 최근 하락을 건전한 시장 조정으로 본다."
+        parts: ["The S&P 500 ", " at a new ", " yesterday."],
+        answers: ["closed", "all-time high"],
+        fullEn: "The S&P 500 closed at a new all-time high yesterday.",
+        ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
       },
       {
-        parts: ["High ", " ", " short-term trading riskier."],
-        answers: ["volatility", "makes"],
-        fullEn: "High volatility makes short-term trading riskier.",
-        ko: "높은 변동성은 단기 매매의 위험을 키운다."
+        parts: ["Retail traders were quick to ", " when tech shares ", " back."],
+        answers: ["buy the dip", "pulled"],
+        fullEn: "Retail traders were quick to buy the dip when tech shares pulled back.",
+        ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
       },
       {
-        parts: ["This company ", " an attractive ", " of 5%."],
-        answers: ["offers", "dividend yield"],
-        fullEn: "This company offers an attractive dividend yield of 5%.",
-        ko: "이 회사는 연 5%의 매력적인 배당수익률을 제공한다."
+        parts: ["The expected rate cut is already ", " by the bond market."],
+        answers: ["priced in"],
+        fullEn: "The expected rate cut is already priced in by the bond market.",
+        ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
       },
       {
-        parts: ["The stock ", " 8% on a positive ", "."],
-        answers: ["jumped", "earnings surprise"],
-        fullEn: "The stock jumped 8% on a positive earnings surprise.",
-        ko: "긍정적인 어닝 서프라이즈에 주가가 8% 뛰었다."
+        parts: ["The Fed chair's ", " remarks ", " Treasury yields higher."],
+        answers: ["hawkish", "sent"],
+        fullEn: "The Fed chair's hawkish remarks sent Treasury yields higher.",
+        ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
       },
       {
-        parts: ["Sticky ", " could ", " the central bank's rate cuts."],
-        answers: ["inflation", "delay"],
-        fullEn: "Sticky inflation could delay the central bank's rate cuts.",
-        ko: "끈적한 인플레이션이 중앙은행의 금리 인하를 늦출 수 있다."
+        parts: ["Stocks ", " on hopes of a more ", " stance next month."],
+        answers: ["climbed", "dovish"],
+        fullEn: "Stocks climbed on hopes of a more dovish stance next month.",
+        ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
       },
       {
-        parts: ["Another ", " weighed on growth stocks."],
-        answers: ["interest rate hike"],
-        fullEn: "Another interest rate hike weighed on growth stocks.",
-        ko: "추가 금리 인상이 성장주에 부담을 주었다."
+        parts: ["Analysts believe housing demand is finally starting to ", "."],
+        answers: ["bottom out"],
+        fullEn: "Analysts believe housing demand is finally starting to bottom out.",
+        ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
       }
     ];
 
@@ -600,11 +663,11 @@
     function render() {
       const app = document.getElementById("app");
       if (currentTab === "today") {
-        app.innerHTML = renderWordList(DAY2, "2026-11-26 (2회차 · 10개)");
+        app.innerHTML = renderWordList(DAY3, "2026-11-27 (3회차 · 10개)");
       } else if (currentTab === "quiz") {
         app.innerHTML = renderQuiz();
       } else {
-        app.innerHTML = renderWordList([...DAY2, ...DAY1_WORDS], "누적 전체 단어 (20개)");
+        app.innerHTML = renderWordList([...DAY3, ...DAY2, ...DAY1_WORDS], "누적 전체 단어 (30개)");
       }
     }
 
