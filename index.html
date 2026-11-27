@@ -75,7 +75,7 @@
     }
     .tabs {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-top: 10px;
     }
     .tab {
@@ -83,11 +83,12 @@
       border: none;
       background: var(--bg);
       color: var(--sub);
-      padding: 10px 8px;
+      padding: 10px 4px;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
     }
     .tab.active {
       background: var(--primary);
@@ -250,6 +251,104 @@
       text-align: center;
       margin-top: 16px;
     }
+
+    /* ===== 지난 단어(아카이브) ===== */
+    .search-box {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .search-input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 11px 38px 11px 13px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .search-clear {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: #edf0f5;
+      color: var(--sub);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .date-group {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .date-head {
+      width: 100%;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .date-main {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .date-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sub);
+      margin-left: 6px;
+    }
+    .date-arrow {
+      font-size: 12px;
+      color: var(--sub);
+      transition: transform 0.15s;
+    }
+    .date-group.open .date-arrow { transform: rotate(180deg); }
+    .date-body {
+      display: none;
+      border-top: 1px solid var(--line);
+      padding: 4px 16px 8px;
+    }
+    .date-group.open .date-body { display: block; }
+    .date-tools {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 10px 0 6px;
+    }
+    .word-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .word-item:last-child { border-bottom: none; }
+    .word-item .word-term { font-size: 16px; }
+    .word-item .word-meaning { font-size: 13px; }
+    .word-item .example-box { margin-top: 8px; padding-top: 8px; }
+    .word-item .example-en { font-size: 14px; }
+    .word-item .example-ko { font-size: 12px; }
+    .empty-note {
+      text-align: center;
+      color: var(--sub);
+      font-size: 13px;
+      padding: 24px 8px;
+    }
+    .search-hit-date { color: var(--primary); }
   </style>
 </head>
 <body>
@@ -262,224 +361,279 @@
       </div>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('today', this)">오늘 단어 (11/27)</button>
-      <button class="tab" onclick="switchTab('quiz', this)">복습 퀴즈 (11/26)</button>
-      <button class="tab" onclick="switchTab('all', this)">전체 (30)</button>
+      <button class="tab active" data-tab="today" onclick="switchTab('today', this)">📖 오늘의 단어</button>
+      <button class="tab" data-tab="quiz" onclick="switchTab('quiz', this)">✏️ 복습 퀴즈</button>
+      <button class="tab" data-tab="archive" onclick="switchTab('archive', this)">📚 지난 단어</button>
     </div>
   </header>
 
   <main id="app"></main>
 
   <script>
-    const DAY3 = [
+    /* ==========================================================================
+       ARCHIVE : 지나간 단어 누적 데이터
+       --------------------------------------------------------------------------
+       · 최신 회차가 배열의 맨 앞(index 0)에 옵니다.
+       · 새 회차를 올릴 때는 아래 형식의 객체를 배열 맨 앞에 추가하면 됩니다.
+           {
+             date: "YYYY-MM-DD",     // 날짜
+             round: 4,               // 회차
+             words: [                // 그날의 단어 10개
+               { term: "단어/숙어", meaning: "한글 뜻", en: "예문", ko: "해석" },
+               ...
+             ],
+             quiz: [                 // (선택) 그날 단어로 만든 복습 퀴즈
+               { parts: ["...", "...", "..."], answers: ["정답1", "정답2"], fullEn: "완성 문장", ko: "해석" },
+               ...
+             ]
+           }
+       · words의 개수·날짜는 자유롭게 늘어나며, 웹앱은 이 배열만 보고
+         "오늘의 단어"(가장 최근 날짜) · "지난 단어"(전체 누적)를 그립니다.
+       · 기존 회차는 절대 지우지 마세요.
+       ========================================================================== */
+    const ARCHIVE = [
       {
-        term: "liquidity",
-        meaning: "유동성, 현금화하기 쉬운 정도",
-        en: "Central banks inject liquidity into the market during a crisis.",
-        ko: "중앙은행은 위기 시 시장에 유동성을 공급한다."
+        date: "2026-11-27",
+        round: 3,
+        words: [
+          {
+            term: "liquidity",
+            meaning: "유동성, 현금화하기 쉬운 정도",
+            en: "Central banks inject liquidity into the market during a crisis.",
+            ko: "중앙은행은 위기 시 시장에 유동성을 공급한다."
+          },
+          {
+            term: "stagflation",
+            meaning: "스태그플레이션, 경기 침체 속 물가 상승",
+            en: "Rising oil prices sparked fears of stagflation.",
+            ko: "유가 상승이 스태그플레이션 우려를 불러일으켰다."
+          },
+          {
+            term: "soft landing",
+            meaning: "연착륙, 경기 급랭 없이 물가만 잡히는 것",
+            en: "Investors are betting on a soft landing for the U.S. economy.",
+            ko: "투자자들은 미국 경제의 연착륙에 베팅하고 있다."
+          },
+          {
+            term: "guidance",
+            meaning: "실적 전망치, 기업이 제시하는 향후 예상 실적",
+            en: "The stock fell after management issued weak guidance for next quarter.",
+            ko: "경영진이 다음 분기 부진한 실적 전망을 내놓자 주가가 하락했다."
+          },
+          {
+            term: "undervalued",
+            meaning: "저평가된",
+            en: "Value investors look for undervalued stocks with strong fundamentals.",
+            ko: "가치 투자자들은 펀더멘털이 탄탄한 저평가 주식을 찾는다."
+          },
+          {
+            term: "overbought",
+            meaning: "과매수된, 단기 급등으로 매수세가 과도한",
+            en: "Technical indicators suggest the rally has left the index overbought.",
+            ko: "기술적 지표는 이번 반등으로 지수가 과매수 구간에 들어섰음을 시사한다."
+          },
+          {
+            term: "hedging",
+            meaning: "헤징, 위험 회피 거래",
+            en: "Airlines use fuel hedging to protect against sudden price spikes.",
+            ko: "항공사들은 갑작스러운 유가 급등에 대비해 연료 헤징을 활용한다."
+          },
+          {
+            term: "yield curve",
+            meaning: "수익률 곡선, 장단기 금리차 곡선",
+            en: "An inverted yield curve is often seen as a recession warning.",
+            ko: "장단기 금리 역전(역전된 수익률 곡선)은 흔히 경기 침체 신호로 여겨진다."
+          },
+          {
+            term: "break even",
+            meaning: "손익분기점에 도달하다, 본전을 찾다",
+            en: "The stock needs to rise 15% just for me to break even.",
+            ko: "본전만 찾으려 해도 주가가 15%는 올라야 한다."
+          },
+          {
+            term: "dead cat bounce",
+            meaning: "데드 캣 바운스, 하락장 속 일시적 반등",
+            en: "Some traders warned that today's rebound could be a dead cat bounce.",
+            ko: "일부 트레이더들은 오늘의 반등이 일시적 반등(데드 캣 바운스)일 수 있다고 경고했다."
+          }
+        ]
       },
       {
-        term: "stagflation",
-        meaning: "스태그플레이션, 경기 침체 속 물가 상승",
-        en: "Rising oil prices sparked fears of stagflation.",
-        ko: "유가 상승이 스태그플레이션 우려를 불러일으켰다."
+        date: "2026-11-26",
+        round: 2,
+        words: [
+          {
+            term: "blue chip",
+            meaning: "우량주, 대형 우량 기업",
+            en: "Many conservative investors prefer holding blue chip stocks for the long term.",
+            ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
+          },
+          {
+            term: "market cap",
+            meaning: "시가총액",
+            en: "The semiconductor giant's market cap surpassed $500 billion.",
+            ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
+          },
+          {
+            term: "profit-taking",
+            meaning: "차익 실현",
+            en: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
+            ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
+          },
+          {
+            term: "short selling",
+            meaning: "공매도",
+            en: "Regulators tightened rules on short selling to curb excessive declines.",
+            ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
+          },
+          {
+            term: "all-time high",
+            meaning: "사상 최고치",
+            en: "The S&P 500 closed at a new all-time high yesterday.",
+            ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
+          },
+          {
+            term: "buy the dip",
+            meaning: "저가 매수하다, 하락장에서 사다",
+            en: "Retail traders were quick to buy the dip when tech shares pulled back.",
+            ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
+          },
+          {
+            term: "priced in",
+            meaning: "이미 가격에 반영된",
+            en: "The expected rate cut is already priced in by the bond market.",
+            ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
+          },
+          {
+            term: "hawkish",
+            meaning: "매파적인, 긴축·금리 인상을 선호하는",
+            en: "The Fed chair's hawkish remarks sent Treasury yields higher.",
+            ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
+          },
+          {
+            term: "dovish",
+            meaning: "비둘기파적인, 완화·금리 인하를 선호하는",
+            en: "Stocks climbed on hopes of a more dovish stance next month.",
+            ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
+          },
+          {
+            term: "bottom out",
+            meaning: "바닥을 치다, 하락세가 멈추고 반등 조짐을 보이다",
+            en: "Analysts believe housing demand is finally starting to bottom out.",
+            ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
+          }
+        ],
+        quiz: [
+          {
+            parts: ["Many conservative investors ", " holding ", " stocks for the long term."],
+            answers: ["prefer", "blue chip"],
+            fullEn: "Many conservative investors prefer holding blue chip stocks for the long term.",
+            ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
+          },
+          {
+            parts: ["The semiconductor giant's ", " ", " $500 billion."],
+            answers: ["market cap", "surpassed"],
+            fullEn: "The semiconductor giant's market cap surpassed $500 billion.",
+            ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
+          },
+          {
+            parts: ["Shares ", " slightly due to ", " after a five-day winning streak."],
+            answers: ["slipped", "profit-taking"],
+            fullEn: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
+            ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
+          },
+          {
+            parts: ["Regulators ", " rules on ", " to curb excessive declines."],
+            answers: ["tightened", "short selling"],
+            fullEn: "Regulators tightened rules on short selling to curb excessive declines.",
+            ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
+          },
+          {
+            parts: ["The S&P 500 ", " at a new ", " yesterday."],
+            answers: ["closed", "all-time high"],
+            fullEn: "The S&P 500 closed at a new all-time high yesterday.",
+            ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
+          },
+          {
+            parts: ["Retail traders were quick to ", " when tech shares ", " back."],
+            answers: ["buy the dip", "pulled"],
+            fullEn: "Retail traders were quick to buy the dip when tech shares pulled back.",
+            ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
+          },
+          {
+            parts: ["The expected rate cut is already ", " by the bond market."],
+            answers: ["priced in"],
+            fullEn: "The expected rate cut is already priced in by the bond market.",
+            ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
+          },
+          {
+            parts: ["The Fed chair's ", " remarks ", " Treasury yields higher."],
+            answers: ["hawkish", "sent"],
+            fullEn: "The Fed chair's hawkish remarks sent Treasury yields higher.",
+            ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
+          },
+          {
+            parts: ["Stocks ", " on hopes of a more ", " stance next month."],
+            answers: ["climbed", "dovish"],
+            fullEn: "Stocks climbed on hopes of a more dovish stance next month.",
+            ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
+          },
+          {
+            parts: ["Analysts believe housing demand is finally starting to ", "."],
+            answers: ["bottom out"],
+            fullEn: "Analysts believe housing demand is finally starting to bottom out.",
+            ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
+          }
+        ]
       },
       {
-        term: "soft landing",
-        meaning: "연착륙, 경기 급랭 없이 물가만 잡히는 것",
-        en: "Investors are betting on a soft landing for the U.S. economy.",
-        ko: "투자자들은 미국 경제의 연착륙에 베팅하고 있다."
-      },
-      {
-        term: "guidance",
-        meaning: "실적 전망치, 기업이 제시하는 향후 예상 실적",
-        en: "The stock fell after management issued weak guidance for next quarter.",
-        ko: "경영진이 다음 분기 부진한 실적 전망을 내놓자 주가가 하락했다."
-      },
-      {
-        term: "undervalued",
-        meaning: "저평가된",
-        en: "Value investors look for undervalued stocks with strong fundamentals.",
-        ko: "가치 투자자들은 펀더멘털이 탄탄한 저평가 주식을 찾는다."
-      },
-      {
-        term: "overbought",
-        meaning: "과매수된, 단기 급등으로 매수세가 과도한",
-        en: "Technical indicators suggest the rally has left the index overbought.",
-        ko: "기술적 지표는 이번 반등으로 지수가 과매수 구간에 들어섰음을 시사한다."
-      },
-      {
-        term: "hedging",
-        meaning: "헤징, 위험 회피 거래",
-        en: "Airlines use fuel hedging to protect against sudden price spikes.",
-        ko: "항공사들은 갑작스러운 유가 급등에 대비해 연료 헤징을 활용한다."
-      },
-      {
-        term: "yield curve",
-        meaning: "수익률 곡선, 장단기 금리차 곡선",
-        en: "An inverted yield curve is often seen as a recession warning.",
-        ko: "장단기 금리 역전(역전된 수익률 곡선)은 흔히 경기 침체 신호로 여겨진다."
-      },
-      {
-        term: "break even",
-        meaning: "손익분기점에 도달하다, 본전을 찾다",
-        en: "The stock needs to rise 15% just for me to break even.",
-        ko: "본전만 찾으려 해도 주가가 15%는 올라야 한다."
-      },
-      {
-        term: "dead cat bounce",
-        meaning: "데드 캣 바운스, 하락장 속 일시적 반등",
-        en: "Some traders warned that today's rebound could be a dead cat bounce.",
-        ko: "일부 트레이더들은 오늘의 반등이 일시적 반등(데드 캣 바운스)일 수 있다고 경고했다."
+        date: "2026-11-25",
+        round: 1,
+        words: [
+          { term: "safe haven", meaning: "안전자산, 피난처", en: "Investors rushed to gold as a safe haven during the market turmoil.", ko: "시장 혼란 속에서 투자자들이 안전자산인 금으로 몰렸다." },
+          { term: "bullish", meaning: "강세의, 상승을 전망하는", en: "Analysts remain bullish on tech stocks this quarter.", ko: "애널리스트들은 이번 분기 기술주에 대해 여전히 강세 전망을 유지하고 있다." },
+          { term: "bearish", meaning: "약세의, 하락을 전망하는", en: "A bearish sentiment swept the market after weak jobs data.", ko: "부진한 고용 지표 이후 시장에 약세 심리가 퍼졌다." },
+          { term: "rally", meaning: "반등, 주가 급등세", en: "The index staged a sharp afternoon rally.", ko: "지수는 오후 들어 가파른 반등을 보였다." },
+          { term: "correction", meaning: "조정, 단기 하락", en: "Many see the recent dip as a healthy market correction.", ko: "많은 이들이 최근 하락을 건전한 시장 조정으로 본다." },
+          { term: "volatility", meaning: "변동성", en: "High volatility makes short-term trading riskier.", ko: "높은 변동성은 단기 매매의 위험을 키운다." },
+          { term: "dividend yield", meaning: "배당수익률", en: "This company offers an attractive dividend yield of 5%.", ko: "이 회사는 연 5%의 매력적인 배당수익률을 제공한다." },
+          { term: "earnings surprise", meaning: "어닝 서프라이즈, 예상치 상회/하회", en: "The stock jumped 8% on a positive earnings surprise.", ko: "긍정적인 어닝 서프라이즈에 주가가 8% 뛰었다." },
+          { term: "inflation", meaning: "인플레이션, 물가 상승", en: "Sticky inflation could delay the central bank's rate cuts.", ko: "끈적한 인플레이션이 중앙은행의 금리 인하를 늦출 수 있다." },
+          { term: "interest rate hike", meaning: "금리 인상", en: "Another interest rate hike weighed on growth stocks.", ko: "추가 금리 인상이 성장주에 부담을 주었다." }
+        ]
       }
     ];
 
-    const DAY2 = [
-      {
-        term: "blue chip",
-        meaning: "우량주, 대형 우량 기업",
-        en: "Many conservative investors prefer holding blue chip stocks for the long term.",
-        ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
-      },
-      {
-        term: "market cap",
-        meaning: "시가총액",
-        en: "The semiconductor giant's market cap surpassed $500 billion.",
-        ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
-      },
-      {
-        term: "profit-taking",
-        meaning: "차익 실현",
-        en: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
-        ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
-      },
-      {
-        term: "short selling",
-        meaning: "공매도",
-        en: "Regulators tightened rules on short selling to curb excessive declines.",
-        ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
-      },
-      {
-        term: "all-time high",
-        meaning: "사상 최고치",
-        en: "The S&P 500 closed at a new all-time high yesterday.",
-        ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
-      },
-      {
-        term: "buy the dip",
-        meaning: "저가 매수하다, 하락장에서 사다",
-        en: "Retail traders were quick to buy the dip when tech shares pulled back.",
-        ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
-      },
-      {
-        term: "priced in",
-        meaning: "이미 가격에 반영된",
-        en: "The expected rate cut is already priced in by the bond market.",
-        ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
-      },
-      {
-        term: "hawkish",
-        meaning: "매파적인, 긴축·금리 인상을 선호하는",
-        en: "The Fed chair's hawkish remarks sent Treasury yields higher.",
-        ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
-      },
-      {
-        term: "dovish",
-        meaning: "비둘기파적인, 완화·금리 인하를 선호하는",
-        en: "Stocks climbed on hopes of a more dovish stance next month.",
-        ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
-      },
-      {
-        term: "bottom out",
-        meaning: "바닥을 치다, 하락세가 멈추고 반등 조짐을 보이다",
-        en: "Analysts believe housing demand is finally starting to bottom out.",
-        ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
-      }
-    ];
+    /* ---- ARCHIVE에서 파생되는 값들 (직접 수정하지 않아도 됩니다) ---- */
+    const DAYS = ARCHIVE.slice().sort((a, b) => (a.date < b.date ? 1 : -1)); // 최신순
+    const TODAY = DAYS[0];
+    const QUIZ_DAY = DAYS.find(d => Array.isArray(d.quiz) && d.quiz.length) || null;
+    const ALL_WORDS = DAYS.reduce((acc, d) => acc.concat(d.words.map((w, i) => ({ ...w, date: d.date, round: d.round, no: i + 1 }))), []);
+    const TOTAL_COUNT = ALL_WORDS.length;
 
-    const DAY1_QUIZ = [
-      {
-        parts: ["Many conservative investors ", " holding ", " stocks for the long term."],
-        answers: ["prefer", "blue chip"],
-        fullEn: "Many conservative investors prefer holding blue chip stocks for the long term.",
-        ko: "많은 보수적 투자자들은 장기 보유용으로 우량주를 선호한다."
-      },
-      {
-        parts: ["The semiconductor giant's ", " ", " $500 billion."],
-        answers: ["market cap", "surpassed"],
-        fullEn: "The semiconductor giant's market cap surpassed $500 billion.",
-        ko: "그 반도체 거인의 시가총액이 5,000억 달러를 넘어섰다."
-      },
-      {
-        parts: ["Shares ", " slightly due to ", " after a five-day winning streak."],
-        answers: ["slipped", "profit-taking"],
-        fullEn: "Shares slipped slightly due to profit-taking after a five-day winning streak.",
-        ko: "5일 연속 상승 이후 차익 실현 매물이 나오며 주가가 소폭 하락했다."
-      },
-      {
-        parts: ["Regulators ", " rules on ", " to curb excessive declines."],
-        answers: ["tightened", "short selling"],
-        fullEn: "Regulators tightened rules on short selling to curb excessive declines.",
-        ko: "당국은 과도한 하락을 막기 위해 공매도 규제를 강화했다."
-      },
-      {
-        parts: ["The S&P 500 ", " at a new ", " yesterday."],
-        answers: ["closed", "all-time high"],
-        fullEn: "The S&P 500 closed at a new all-time high yesterday.",
-        ko: "S&P 500 지수가 어제 새로운 사상 최고치로 마감했다."
-      },
-      {
-        parts: ["Retail traders were quick to ", " when tech shares ", " back."],
-        answers: ["buy the dip", "pulled"],
-        fullEn: "Retail traders were quick to buy the dip when tech shares pulled back.",
-        ko: "기술주가 조정을 받자 개인 투자자들이 빠르게 저가 매수에 나섰다."
-      },
-      {
-        parts: ["The expected rate cut is already ", " by the bond market."],
-        answers: ["priced in"],
-        fullEn: "The expected rate cut is already priced in by the bond market.",
-        ko: "예상된 금리 인하는 이미 채권 시장 가격에 반영되어 있다."
-      },
-      {
-        parts: ["The Fed chair's ", " remarks ", " Treasury yields higher."],
-        answers: ["hawkish", "sent"],
-        fullEn: "The Fed chair's hawkish remarks sent Treasury yields higher.",
-        ko: "연준 의장의 매파적 발언에 국채 금리가 상승했다."
-      },
-      {
-        parts: ["Stocks ", " on hopes of a more ", " stance next month."],
-        answers: ["climbed", "dovish"],
-        fullEn: "Stocks climbed on hopes of a more dovish stance next month.",
-        ko: "다음 달 더 비둘기파적인 기조가 나올 거란 기대감에 주가가 올랐다."
-      },
-      {
-        parts: ["Analysts believe housing demand is finally starting to ", "."],
-        answers: ["bottom out"],
-        fullEn: "Analysts believe housing demand is finally starting to bottom out.",
-        ko: "애널리스트들은 주택 수요가 마침내 바닥을 치기 시작했다고 본다."
-      }
-    ];
-
-    const DAY1_WORDS = [
-      { term: "safe haven", meaning: "안전자산, 피난처", en: "Investors rushed to gold as a safe haven during the market turmoil.", ko: "시장 혼란 속에서 투자자들이 안전자산인 금으로 몰렸다." },
-      { term: "bullish", meaning: "강세의, 상승을 전망하는", en: "Analysts remain bullish on tech stocks this quarter.", ko: "애널리스트들은 이번 분기 기술주에 대해 여전히 강세 전망을 유지하고 있다." },
-      { term: "bearish", meaning: "약세의, 하락을 전망하는", en: "A bearish sentiment swept the market after weak jobs data.", ko: "부진한 고용 지표 이후 시장에 약세 심리가 퍼졌다." },
-      { term: "rally", meaning: "반등, 주가 급등세", en: "The index staged a sharp afternoon rally.", ko: "지수는 오후 들어 가파른 반등을 보였다." },
-      { term: "correction", meaning: "조정, 단기 하락", en: "Many see the recent dip as a healthy market correction.", ko: "많은 이들이 최근 하락을 건전한 시장 조정으로 본다." },
-      { term: "volatility", meaning: "변동성", en: "High volatility makes short-term trading riskier.", ko: "높은 변동성은 단기 매매의 위험을 키운다." },
-      { term: "dividend yield", meaning: "배당수익률", en: "This company offers an attractive dividend yield of 5%.", ko: "이 회사는 연 5%의 매력적인 배당수익률을 제공한다." },
-      { term: "earnings surprise", meaning: "어닝 서프라이즈, 예상치 상회/하회", en: "The stock jumped 8% on a positive earnings surprise.", ko: "긍정적인 어닝 서프라이즈에 주가가 8% 뛰었다." },
-      { term: "inflation", meaning: "인플레이션, 물가 상승", en: "Sticky inflation could delay the central bank's rate cuts.", ko: "끈적한 인플레이션이 중앙은행의 금리 인하를 늦출 수 있다." },
-      { term: "interest rate hike", meaning: "금리 인상", en: "Another interest rate hike weighed on growth stocks.", ko: "추가 금리 인상이 성장주에 부담을 주었다." }
-    ];
+    function shortDate(date) {
+      const [, m, d] = date.split("-");
+      return `${Number(m)}/${Number(d)}`;
+    }
+    function weekdayOf(date) {
+      const w = ["일", "월", "화", "수", "목", "금", "토"];
+      return w[new Date(date + "T00:00:00").getDay()];
+    }
+    function labelOf(day) { return `${shortDate(day.date)} (${weekdayOf(day.date)})`; }
 
     let currentTab = "today";
     let speechRate = 0.95;
     let hideMeanings = false;
-    let quizInputs = DAY1_QUIZ.map(q => q.answers.map(() => ""));
-    let quizChecked = DAY1_QUIZ.map(() => false);
-    let playingAll = false;
 
+    const QUIZ = QUIZ_DAY ? QUIZ_DAY.quiz : [];
+    let quizInputs = QUIZ.map(q => q.answers.map(() => ""));
+    let quizChecked = QUIZ.map(() => false);
+
+    let playState = null; // { key, items, idx }
+    let archiveQuery = "";
+    const openDates = new Set(TODAY ? [TODAY.date] : []);
+
+    /* ---------------- 음성 ---------------- */
     function setRate(r, btn) {
       speechRate = r;
       document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
@@ -502,40 +656,50 @@
       window.speechSynthesis.speak(u);
     }
 
-    function stopSpeak() {
-      playingAll = false;
+    function stopSpeech() {
+      playState = null;
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-      render();
     }
 
-    function playAll(list) {
-      if (playingAll) {
-        stopSpeak();
+    function speakWord(date, idx, kind) {
+      const day = ARCHIVE.find(d => d.date === date);
+      if (!day || !day.words[idx]) return;
+      speakText(kind === "example" ? day.words[idx].en : day.words[idx].term);
+    }
+
+    function playAll(date) {
+      const day = ARCHIVE.find(d => d.date === date);
+      if (!day) return;
+      if (playState && playState.key === date) {
+        stopSpeech();
+        render();
         return;
       }
-      playingAll = true;
+      stopSpeech();
+      playState = { key: date, items: day.words, idx: 0 };
       render();
-      let idx = 0;
-      function next() {
-        if (!playingAll || idx >= list.length) {
-          playingAll = false;
-          render();
-          return;
-        }
-        const item = list[idx++];
-        speakText(`${item.term}. ${item.en}`, () => {
-          setTimeout(next, 550);
-        });
-      }
-      next();
+      stepPlay();
     }
 
+    function stepPlay() {
+      if (!playState) return;
+      if (playState.idx >= playState.items.length) {
+        playState = null;
+        render();
+        return;
+      }
+      const item = playState.items[playState.idx++];
+      speakText(`${item.term}. ${item.en}`, () => setTimeout(stepPlay, 550));
+    }
+
+    /* ---------------- 탭 ---------------- */
     function switchTab(tab, btn) {
-      stopSpeak();
+      stopSpeech();
       currentTab = tab;
       document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
       btn.classList.add("active");
       render();
+      window.scrollTo({ top: 0 });
     }
 
     function toggleMeanings() {
@@ -543,46 +707,93 @@
       render();
     }
 
-    function renderWordList(list, label) {
-      const blurClass = hideMeanings ? "hidden-text" : "";
-      const cards = list.map((item, i) => `
+    /* ---------------- 지난 단어 ---------------- */
+    function renderArchiveResults() {
+      const box = document.getElementById("archive-results");
+      if (box) box.innerHTML = archiveResultsHtml();
+    }
+
+    function toggleDate(date) {
+      if (openDates.has(date)) openDates.delete(date);
+      else openDates.add(date);
+      renderArchiveResults();
+    }
+
+    function setAllDates(open) {
+      openDates.clear();
+      if (open) DAYS.forEach(d => openDates.add(d.date));
+      render();
+    }
+
+    function onSearch(val) {
+      archiveQuery = val;
+      renderArchiveResults();
+    }
+
+    function clearSearch() {
+      archiveQuery = "";
+      const el = document.getElementById("search");
+      if (el) el.value = "";
+      renderArchiveResults();
+    }
+
+    function matches(word, q) {
+      if (!q) return true;
+      const s = `${word.term} ${word.meaning} ${word.en} ${word.ko}`.toLowerCase();
+      return q.toLowerCase().split(/\s+/).filter(Boolean).every(token => s.includes(token));
+    }
+
+    /* ---------------- 렌더 조각 ---------------- */
+    function audioRow(date, idx) {
+      return `
+        <div class="audio-row">
+          <button class="speak-btn" onclick="speakWord('${date}', ${idx}, 'term')">🔊 단어 발음</button>
+          <button class="speak-btn" onclick="speakWord('${date}', ${idx}, 'example')">🔊 예문 읽기</button>
+        </div>`;
+    }
+
+    function renderWordCard(word, idx) {
+      const blur = hideMeanings ? "hidden-text" : "";
+      return `
         <div class="card">
           <div class="word-head">
             <div>
-              <div class="word-term"><span class="word-num">${i + 1}.</span>${item.term}</div>
-              <div class="word-meaning ${blurClass}">${item.meaning}</div>
+              <div class="word-term"><span class="word-num">${idx + 1}.</span>${word.term}</div>
+              <div class="word-meaning ${blur}">${word.meaning}</div>
             </div>
           </div>
           <div class="example-box">
-            <div class="example-en">${item.en}</div>
-            <div class="example-ko ${blurClass}">${item.ko}</div>
+            <div class="example-en">${word.en}</div>
+            <div class="example-ko ${blur}">${word.ko}</div>
           </div>
-          <div class="audio-row">
-            <button class="speak-btn" onclick='speakText(${JSON.stringify(item.term)})'>🔊 단어 발음</button>
-            <button class="speak-btn" onclick='speakText(${JSON.stringify(item.en)})'>🔊 예문 읽기</button>
-          </div>
-        </div>
-      `).join("");
+          ${audioRow(TODAY.date, idx)}
+        </div>`;
+    }
 
+    function renderToday() {
+      const blur = hideMeanings ? "hidden-text" : "";
+      const cards = TODAY.words.map(renderWordCard).join("");
+      const playing = playState && playState.key === TODAY.date;
       return `
         <div class="toolbar">
-          <span class="badge">${label}</span>
+          <span class="badge">${TODAY.date} (${weekdayOf(TODAY.date)}) · ${TODAY.round}회차 · ${TODAY.words.length}개</span>
           <div style="display:flex; gap:6px;">
             <button class="btn btn-gray" onclick="toggleMeanings()">${hideMeanings ? "👀 뜻 보기" : "🙈 뜻 가리기"}</button>
-            <button class="btn ${playingAll ? "btn-gray" : "btn-soft"}" onclick='${playingAll ? "stopSpeak()" : `playAll(${JSON.stringify(list)})`}'>${playingAll ? "⏹ 멈춤" : "▶ 전체 듣기"}</button>
+            <button class="btn ${playing ? "btn-gray" : "btn-soft"}" onclick="playAll('${TODAY.date}')">${playing ? "⏹ 멈춤" : "▶ 전체 듣기"}</button>
           </div>
         </div>
         ${cards}
-        <p class="tts-note">💡 팁: 무음 모드(매너모드)를 끄면 소리가 더 잘 들려요. (iOS Safari 권장)</p>
+        <p class="tts-note">💡 팁: 무음 모드(매너모드)를 끄면 소리가 더 잘 들려요. (iOS Safari 권장)<br>지나간 단어는 <b>📚 지난 단어</b> 탭에서 다시 볼 수 있어요.</p>
       `;
     }
 
+    /* ---------------- 복습 퀴즈 ---------------- */
     function normalize(s) {
       return s.trim().toLowerCase().replace(/\s+/g, " ");
     }
 
     function isQuestionCorrect(qi) {
-      return DAY1_QUIZ[qi].answers.every((ans, ai) => normalize(quizInputs[qi][ai]) === normalize(ans));
+      return QUIZ[qi].answers.every((ans, ai) => normalize(quizInputs[qi][ai]) === normalize(ans));
     }
 
     function updateInput(qi, ai, val) {
@@ -595,21 +806,23 @@
     }
 
     function checkAllQuiz() {
-      quizChecked = DAY1_QUIZ.map(() => true);
+      quizChecked = QUIZ.map(() => true);
       render();
     }
 
     function resetQuiz() {
-      quizInputs = DAY1_QUIZ.map(q => q.answers.map(() => ""));
-      quizChecked = DAY1_QUIZ.map(() => false);
+      quizInputs = QUIZ.map(q => q.answers.map(() => ""));
+      quizChecked = QUIZ.map(() => false);
       render();
     }
 
     function renderQuiz() {
-      const checkedCount = quizChecked.filter(Boolean).length;
-      const correctCount = DAY1_QUIZ.filter((_, i) => quizChecked[i] && isQuestionCorrect(i)).length;
+      if (!QUIZ_DAY) return `<p class="empty-note">아직 복습 퀴즈가 없어요.</p>`;
 
-      const items = DAY1_QUIZ.map((q, qi) => {
+      const checkedCount = quizChecked.filter(Boolean).length;
+      const correctCount = QUIZ.filter((_, i) => quizChecked[i] && isQuestionCorrect(i)).length;
+
+      const items = QUIZ.map((q, qi) => {
         const checked = quizChecked[qi];
         const allOk = checked && isQuestionCorrect(qi);
 
@@ -642,7 +855,7 @@
             ${feedbackHtml}
             <div class="audio-row">
               <button class="speak-btn" onclick="checkOne(${qi})">정답 확인</button>
-              <button class="speak-btn" onclick='speakText(${JSON.stringify(q.fullEn)})'>🔊 문장 듣기</button>
+              <button class="speak-btn" onclick='speakText(${JSON.stringify(q.fullEn).replace(/'/g, "&#39;")})'>🔊 문장 듣기</button>
             </div>
           </div>
         `;
@@ -650,25 +863,91 @@
 
       return `
         <div class="score-banner">
-          <div class="score-text">${checkedCount > 0 ? `채점 결과: ${correctCount} / ${DAY1_QUIZ.length}점` : "빈칸을 채우고 채점해 보세요!"}</div>
+          <div class="score-text">${checkedCount > 0 ? `채점 결과: ${correctCount} / ${QUIZ.length}점` : "빈칸을 채우고 채점해 보세요!"}</div>
           <div style="display:flex; gap:6px;">
             <button class="btn btn-gray" onclick="resetQuiz()">초기화</button>
             <button class="btn btn-primary" onclick="checkAllQuiz()">전체 채점</button>
           </div>
         </div>
+        <p class="badge" style="display:block; margin:-6px 0 10px;">${labelOf(QUIZ_DAY)} ${QUIZ_DAY.round}회차 단어 복습 · ${QUIZ.length}문항</p>
         ${items}
+      `;
+    }
+
+    /* ---------------- 지난 단어 ---------------- */
+    function archiveResultsHtml() {
+      const q = archiveQuery.trim();
+      const filtered = DAYS.map(day => ({
+        day,
+        words: day.words.map((w, i) => ({ w, i })).filter(({ w }) => matches(w, q))
+      }));
+      const hitCount = filtered.reduce((n, g) => n + g.words.length, 0);
+
+      const groups = filtered.map(({ day, words }) => {
+        if (!words.length) return "";
+        const isOpen = q ? true : openDates.has(day.date);
+        const playing = playState && playState.key === day.date;
+        const blur = hideMeanings ? "hidden-text" : "";
+
+        const list = words.map(({ w, i }) => `
+          <div class="word-item">
+            <div class="word-term"><span class="word-num">${i + 1}.</span>${w.term}</div>
+            <div class="word-meaning ${blur}">${w.meaning}</div>
+            <div class="example-box">
+              <div class="example-en">${w.en}</div>
+              <div class="example-ko ${blur}">${w.ko}</div>
+            </div>
+            ${audioRow(day.date, i)}
+          </div>
+        `).join("");
+
+        return `
+          <div class="date-group ${isOpen ? "open" : ""}">
+            <button class="date-head" onclick="toggleDate('${day.date}')">
+              <span><span class="date-main ${q ? "search-hit-date" : ""}">${day.date} (${weekdayOf(day.date)})</span>
+                <span class="date-sub">${day.round}회차 · ${q ? `${words.length}/${day.words.length}개` : `${day.words.length}개`}</span></span>
+              <span class="date-arrow">▾</span>
+            </button>
+            <div class="date-body">
+              ${q ? "" : `<div class="date-tools">
+                <button class="btn ${playing ? "btn-gray" : "btn-soft"}" onclick="playAll('${day.date}')">${playing ? "⏹ 멈춤" : "▶ 이 날 전체 듣기"}</button>
+              </div>`}
+              ${list}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        ${q ? `<p class="badge" style="display:block; margin:0 0 10px;">“${q}” 검색 결과 ${hitCount}개</p>` : ""}
+        ${hitCount ? groups : `<p class="empty-note">검색 결과가 없어요. 다른 단어로 찾아보세요.</p>`}
+        <p class="tts-note">💡 날짜를 누르면 그날 단어가 펼쳐져요. 단어·예문 발음과 뜻 가리기도 그대로 쓸 수 있어요.</p>
+      `;
+    }
+
+    function renderArchive() {
+      const openFlag = DAYS.every(d => openDates.has(d.date));
+      return `
+        <div class="toolbar">
+          <span class="badge">지난 단어 · ${DAYS.length}일 · 총 ${TOTAL_COUNT}개</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-gray" onclick="toggleMeanings()">${hideMeanings ? "👀 뜻 보기" : "🙈 뜻 가리기"}</button>
+            <button class="btn btn-gray" onclick="setAllDates(${openFlag ? "false" : "true"})">${openFlag ? "모두 접기" : "모두 펼치기"}</button>
+          </div>
+        </div>
+        <div class="search-box">
+          <input id="search" class="search-input" type="search" placeholder="🔍 단어·뜻·예문 검색 (예: rally, 금리)" value="${archiveQuery.replace(/"/g, "&quot;")}" oninput="onSearch(this.value)" autocomplete="off" autocapitalize="none" spellcheck="false" />
+          <button class="search-clear" onclick="clearSearch()" aria-label="검색어 지우기">✕</button>
+        </div>
+        <div id="archive-results">${archiveResultsHtml()}</div>
       `;
     }
 
     function render() {
       const app = document.getElementById("app");
-      if (currentTab === "today") {
-        app.innerHTML = renderWordList(DAY3, "2026-11-27 (3회차 · 10개)");
-      } else if (currentTab === "quiz") {
-        app.innerHTML = renderQuiz();
-      } else {
-        app.innerHTML = renderWordList([...DAY3, ...DAY2, ...DAY1_WORDS], "누적 전체 단어 (30개)");
-      }
+      if (currentTab === "today") app.innerHTML = renderToday();
+      else if (currentTab === "quiz") app.innerHTML = renderQuiz();
+      else app.innerHTML = renderArchive();
     }
 
     if ("speechSynthesis" in window) {
