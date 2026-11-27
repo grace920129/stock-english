@@ -728,12 +728,16 @@
     function onSearch(val) {
       archiveQuery = val;
       renderArchiveResults();
+      const clear = document.getElementById("search-clear");
+      if (clear) clear.style.display = val.trim() ? "inline-block" : "none";
     }
 
     function clearSearch() {
       archiveQuery = "";
       const el = document.getElementById("search");
       if (el) el.value = "";
+      const clear = document.getElementById("search-clear");
+      if (clear) clear.style.display = "none";
       renderArchiveResults();
     }
 
@@ -936,8 +940,8 @@
           </div>
         </div>
         <div class="search-box">
-          <input id="search" class="search-input" type="search" placeholder="🔍 단어·뜻·예문 검색 (예: rally, 금리)" value="${archiveQuery.replace(/"/g, "&quot;")}" oninput="onSearch(this.value)" autocomplete="off" autocapitalize="none" spellcheck="false" />
-          <button class="search-clear" onclick="clearSearch()" aria-label="검색어 지우기">✕</button>
+          <input id="search" class="search-input" type="text" inputmode="search" enterkeyhint="search" placeholder="🔍 단어·뜻·예문 검색 (예: rally, 금리)" value="${archiveQuery.replace(/"/g, "&quot;")}" oninput="onSearch(this.value)" autocomplete="off" autocapitalize="none" spellcheck="false" />
+          <button id="search-clear" class="search-clear" onclick="clearSearch()" aria-label="검색어 지우기" style="display:${archiveQuery.trim() ? "inline-block" : "none"}">✕</button>
         </div>
         <div id="archive-results">${archiveResultsHtml()}</div>
       `;
