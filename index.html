@@ -382,16 +382,148 @@
                { term: "단어/숙어", meaning: "한글 뜻", en: "예문", ko: "해석" },
                ...
              ],
-             quiz: [                 // (선택) 그날 단어로 만든 복습 퀴즈
+             quiz: [                 // (선택) 직전 회차 단어로 만든 복습 퀴즈
                { parts: ["...", "...", "..."], answers: ["정답1", "정답2"], fullEn: "완성 문장", ko: "해석" },
                ...
-             ]
+             ],
+             quizDate: "YYYY-MM-DD", // (선택) 퀴즈 문제가 나온 회차의 날짜. 없으면 이 객체의 date
+             quizRound: 3           // (선택) 퀴즈 문제가 나온 회차. 없으면 이 객체의 round
            }
        · words의 개수·날짜는 자유롭게 늘어나며, 웹앱은 이 배열만 보고
          "오늘의 단어"(가장 최근 날짜) · "지난 단어"(전체 누적)를 그립니다.
        · 기존 회차는 절대 지우지 마세요.
        ========================================================================== */
     const ARCHIVE = [
+      {
+        date: "2026-11-28",
+        round: 4,
+        words: [
+          {
+            term: "P/E ratio",
+            meaning: "주가수익비율, 주가를 주당순이익으로 나눈 값",
+            en: "The stock trades at a P/E ratio of 12, below its sector average.",
+            ko: "이 주식은 업종 평균보다 낮은 주가수익비율(P/E) 12배에 거래된다."
+          },
+          {
+            term: "earnings per share (EPS)",
+            meaning: "주당순이익",
+            en: "Quarterly earnings per share rose 18% from a year earlier.",
+            ko: "분기 주당순이익(EPS)이 1년 전보다 18% 늘었다."
+          },
+          {
+            term: "free cash flow",
+            meaning: "잉여현금흐름, 영업으로 벌어 투자하고 남은 현금",
+            en: "Strong free cash flow gives the company room to raise its dividend.",
+            ko: "탄탄한 잉여현금흐름 덕분에 회사는 배당을 늘릴 여력이 있다."
+          },
+          {
+            term: "share buyback",
+            meaning: "자사주 매입",
+            en: "The board approved a $2 billion share buyback program.",
+            ko: "이사회가 20억 달러 규모의 자사주 매입 계획을 승인했다."
+          },
+          {
+            term: "quantitative easing",
+            meaning: "양적 완화, 중앙은행의 대규모 자산 매입",
+            en: "Quantitative easing pushed long-term interest rates to record lows.",
+            ko: "양적 완화로 장기 금리가 사상 최저 수준까지 내려갔다."
+          },
+          {
+            term: "recession",
+            meaning: "경기 침체",
+            en: "Economists warn that a recession could hit early next year.",
+            ko: "경제학자들은 내년 초 경기 침체가 올 수 있다고 경고한다."
+          },
+          {
+            term: "margin call",
+            meaning: "마진콜, 증거금 부족으로 추가 입금을 요구받는 것",
+            en: "He was forced to sell shares after getting a margin call.",
+            ko: "그는 마진콜을 받은 뒤 어쩔 수 없이 주식을 팔아야 했다."
+          },
+          {
+            term: "IPO",
+            meaning: "기업공개, 신규 상장",
+            en: "The battery maker's IPO was oversubscribed on the first day.",
+            ko: "그 배터리 회사의 기업공개(IPO)는 첫날 청약이 초과 접수됐다."
+          },
+          {
+            term: "consumer price index (CPI)",
+            meaning: "소비자물가지수",
+            en: "The consumer price index rose 3.1% from a year ago.",
+            ko: "소비자물가지수(CPI)가 1년 전보다 3.1% 올랐다."
+          },
+          {
+            term: "resistance level",
+            meaning: "저항선, 주가가 오르다 막히는 가격대",
+            en: "The stock stalled just below a key resistance level.",
+            ko: "주가는 주요 저항선 바로 아래에서 상승이 멈췄다."
+          }
+        ],
+        quiz: [
+          {
+            parts: ["Central banks ", " liquidity into the market during a ", "."],
+            answers: ["inject", "crisis"],
+            fullEn: "Central banks inject liquidity into the market during a crisis.",
+            ko: "중앙은행은 위기 시 시장에 유동성을 공급한다."
+          },
+          {
+            parts: ["Rising oil prices ", " fears of ", "."],
+            answers: ["sparked", "stagflation"],
+            fullEn: "Rising oil prices sparked fears of stagflation.",
+            ko: "유가 상승이 스태그플레이션 우려를 불러일으켰다."
+          },
+          {
+            parts: ["Investors are ", " on a ", " for the U.S. economy."],
+            answers: ["betting", "soft landing"],
+            fullEn: "Investors are betting on a soft landing for the U.S. economy.",
+            ko: "투자자들은 미국 경제의 연착륙에 베팅하고 있다."
+          },
+          {
+            parts: ["The stock fell after management ", " weak ", " for next quarter."],
+            answers: ["issued", "guidance"],
+            fullEn: "The stock fell after management issued weak guidance for next quarter.",
+            ko: "경영진이 다음 분기 부진한 실적 전망을 내놓자 주가가 하락했다."
+          },
+          {
+            parts: ["Value investors look for ", " stocks with strong ", "."],
+            answers: ["undervalued", "fundamentals"],
+            fullEn: "Value investors look for undervalued stocks with strong fundamentals.",
+            ko: "가치 투자자들은 펀더멘털이 탄탄한 저평가 주식을 찾는다."
+          },
+          {
+            parts: ["Technical indicators suggest the rally has left the index ", "."],
+            answers: ["overbought"],
+            fullEn: "Technical indicators suggest the rally has left the index overbought.",
+            ko: "기술적 지표는 이번 반등으로 지수가 과매수 구간에 들어섰음을 시사한다."
+          },
+          {
+            parts: ["Airlines use fuel ", " to protect against sudden price ", "."],
+            answers: ["hedging", "spikes"],
+            fullEn: "Airlines use fuel hedging to protect against sudden price spikes.",
+            ko: "항공사들은 갑작스러운 유가 급등에 대비해 연료 헤징을 활용한다."
+          },
+          {
+            parts: ["An ", " yield curve is often seen as a ", " warning."],
+            answers: ["inverted", "recession"],
+            fullEn: "An inverted yield curve is often seen as a recession warning.",
+            ko: "장단기 금리 역전(역전된 수익률 곡선)은 흔히 경기 침체 신호로 여겨진다."
+          },
+          {
+            parts: ["The stock needs to ", " 15% just for me to ", "."],
+            answers: ["rise", "break even"],
+            fullEn: "The stock needs to rise 15% just for me to break even.",
+            ko: "본전만 찾으려 해도 주가가 15%는 올라야 한다."
+          },
+          {
+            parts: ["Some traders warned that today's ", " could be a ", "."],
+            answers: ["rebound", "dead cat bounce"],
+            fullEn: "Some traders warned that today's rebound could be a dead cat bounce.",
+            ko: "일부 트레이더들은 오늘의 반등이 일시적 반등(데드 캣 바운스)일 수 있다고 경고했다."
+          }
+        ],
+        quizDate: "2026-11-27",
+        quizRound: 3
+      },
       {
         date: "2026-11-27",
         round: 3,
@@ -873,7 +1005,7 @@
             <button class="btn btn-primary" onclick="checkAllQuiz()">전체 채점</button>
           </div>
         </div>
-        <p class="badge" style="display:block; margin:-6px 0 10px;">${labelOf(QUIZ_DAY)} ${QUIZ_DAY.round}회차 단어 복습 · ${QUIZ.length}문항</p>
+        <p class="badge" style="display:block; margin:-6px 0 10px;">${labelOf({ date: QUIZ_DAY.quizDate || QUIZ_DAY.date })} ${QUIZ_DAY.quizRound || QUIZ_DAY.round}회차 단어 복습 · ${QUIZ.length}문항</p>
         ${items}
       `;
     }
